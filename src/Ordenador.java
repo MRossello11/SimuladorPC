@@ -1,12 +1,9 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 /**@author Miquel Andreu Rossello Mas
- * @version 1.3
+ * @version 1.4
  * @since 13/01/21
  * @description El Ordenador se encarga del encendido del mismo y de la secuencia de inicio. Estos,
  * son los métodos encargados de la puesta en marcha (comprobar que haya SO y bootear desde el mismo
@@ -17,9 +14,11 @@ import java.util.Scanner;
 //nota: todas las medidas de almacenamiento se encuentran en MB
 
 public class Ordenador {
-    //rutas (cambiar la primera vez que se ejecuta en un ordenador distinto)
-    private static final String ruta = "I:\\DAM\\Primero\\entornos\\SimuladorPC1.3\\src\\SO.txt";
+    //objeto File donde se guardara la informacion del Sistema Operativo
+    File archivoSO = new File("SO.txt");
+
     Scanner sc = new Scanner(System.in); //var escaner
+
     //variables estaticas (sistemas operativos base)
     private static final SistemaOperativo CustomOS = new SistemaOperativo("CustomOS", "20.04_FocalFossa", "x86", false, 50000, 2000);
     private static final SistemaOperativo Ubuntu = new SistemaOperativo("Ubuntu", "20.04_FocalFossa", "x86", false, 25000, 4096);
@@ -67,15 +66,15 @@ public class Ordenador {
     //metodos
     /**SECUENCIA DE INICIO*/
     //pone en marcha el ordenador
-    public void encender(){
+    public void encender() throws IOException {
         setEncendido(true); //se enciende el ordenador
         comprobarSO(); //comprobacion de si hay SO instalado
     }
 
     //comprueba si hay SO instalado o no
-    public void comprobarSO(){
+    public void comprobarSO() throws IOException {
         //comprobacion de si hay SO instalado
-        try(FileReader fr = new FileReader(ruta)){
+        try(FileReader fr = new FileReader(archivoSO)){
             BufferedReader bff = new BufferedReader(fr);
             if (bff.readLine()==null){ //el archivo esta vacio
                 System.out.println("No se encontro ningun Sistema Operativo instalado");
@@ -84,7 +83,13 @@ public class Ordenador {
                 encenderPC();
             }
         } catch (IOException e){
-            System.out.println("Error, No se encontro el archivo SO.txt");
+            try(FileWriter fw = new FileWriter("SO.txt")) {
+                System.out.println("Error, No se encontro el archivo SO.txt");
+                fw.close();
+                comprobarSO();
+            } catch (IOException ex){
+                System.out.println("Error jodido");
+            }
         }
     }
 
@@ -117,7 +122,7 @@ public class Ordenador {
                     getHddTotal()- soTemp.getEspacioRequerido(), getRamTotal()-soTemp.getMemRequerida());
 
             //se recogen los datos en el archivo SO.txt para el proximo encendido
-            try(FileWriter fw = new FileWriter(ruta, true)){
+            try(FileWriter fw = new FileWriter(archivoSO, true)){
                 fw.write(getSo().getNombre()+"\n");
                 fw.write(getSo().getVersion()+"\n");
                 fw.write(getSo().getArquitectura()+"\n");
@@ -139,7 +144,7 @@ public class Ordenador {
 
     //para encender el ordenador cuando hay SO
     public void encenderPC() throws IOException {
-        FileReader fr = new FileReader(ruta);
+        FileReader fr = new FileReader(archivoSO);
         BufferedReader br = new BufferedReader(fr);
         String leerLogs = br.readLine();
         ArrayList<String> datosSO = new ArrayList<String>();

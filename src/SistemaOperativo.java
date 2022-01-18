@@ -1,13 +1,11 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.Objects;
 import java.util.Scanner;
 
 /**@author Miquel Andreu Rossello Mas
- * @version 1.3
+ * @version 1.4
  * @since 13/01/21 El SO se encarga de todas las funcionalidades relacionadas con el mismo como con el software
  * añadido. Permite instalar, desinstalar, abrir y cerrar programas. Tiene la opción de formatear el ordenador entero
  * (SO y programas) y de poder iniciarse con los programas que se instalaron en la sesión anterior. Para acceder
@@ -16,18 +14,18 @@ import java.util.Scanner;
  * "programa" similar a GRUB. */
 
 public class SistemaOperativo {
-    //rutas (cambiar la primera vez que se ejecuta en un ordenador distinto)
-    private static final String ruta = "I:\\DAM\\Primero\\entornos\\SimuladorPC1.3\\src\\SO.txt"; //ruta de instalacion del SO
-    private static final String rutaA = "I:\\DAM\\Primero\\entornos\\SimuladorPC1.3\\src\\programasA.txt"; //ruta programasA
-    private static final String rutaB = "I:\\DAM\\Primero\\entornos\\SimuladorPC1.3\\src\\programasB.txt"; //ruta programasB
-    private String rutaProgramas; //ruta de programas en uso
+    //archivos
+    private final File archivoSO = new File("SO.txt");
+    private final File archivosProgramasA = new File("programasA.txt");
+    private final File archivosProgramasB = new File("programasB.txt");
+    private File archivoProgramas; //ruta de programas en uso
 
     Scanner sc = new Scanner(System.in); //var escaner
 
     //programas base
-    private Software s1 = new Software("VBox", 1.2, 10000, 1000);
-    private Software s2 = new Software("IntelliJ", 15.3, 5000, 500);
-    private Software s3 = new Software("GIMP", 4.65, 40000, 300);
+    private final Software s1 = new Software("VBox", 1.2, 10000, 1000);
+    private final Software s2 = new Software("IntelliJ", 15.3, 5000, 500);
+    private final Software s3 = new Software("GIMP", 4.65, 40000, 300);
 
     //atributos
     private String nombre; //nombre del sistema operativo
@@ -70,7 +68,7 @@ public class SistemaOperativo {
         crearMenu();
         this.almacenamientoPC = almacenamienoPC;
         this.memoriaPC = memoriaPC;
-        this.rutaProgramas = rutaA;
+        this.archivoProgramas = archivosProgramasA;
         recogerProgramasInstalados();
     }
     //metodos
@@ -110,8 +108,8 @@ public class SistemaOperativo {
 
     //recoge y ejecuta la eleccion del menu
     public void recogerEntradaMenu(){
-        int eleccion = sc.nextInt(); //se recoge la eleccion
         //segun la opcion, se ejecuta una accion u otra
+        int eleccion = sc.nextInt();
         try{
             switch (getMenu().get(eleccion)){
                 case "Instalar un programa":
@@ -192,7 +190,7 @@ public class SistemaOperativo {
                     getProgramas().get(getProgramas().size()-1).setInstalado(true); //se asigna como instalado
 
                     //se registra el programa en almacenamiento (programasA.txt)
-                    try(FileWriter fw = new FileWriter(getRutaProgramas(),true)){
+                    try(FileWriter fw = new FileWriter(getArchivoProgramas(),true)){
                         fw.write(sTemp.getNombre()+"\n");
                         fw.write((sTemp.getVersion())+"\n");
                         fw.write((sTemp.getEspacioRequerido())+"\n");
@@ -229,16 +227,16 @@ public class SistemaOperativo {
             cambiarAlmacenamiento(getProgramas().get(numPrograma).getEspacioRequerido(),true);
 
             //se elige la ruta de destino como la ruta contraria al archivo en uso al momento
-            String ruta;
-            if (Objects.equals(getRutaProgramas(), rutaA)){
-                ruta = rutaB;
+            File rutaNueva;
+            if (Objects.equals(getArchivoProgramas(), archivosProgramasA)){
+                rutaNueva = archivosProgramasB;
             } else{
-                ruta = rutaA;
+                rutaNueva = archivosProgramasA;
             }
 
             //se copia el registro en el archivo contrario (de A a B o viceversa) excluyendo el registro del programa a desinstalar
-            try(FileWriter fw = new FileWriter(ruta, true)){
-                FileReader fr = new FileReader(getRutaProgramas());
+            try(FileWriter fw = new FileWriter(rutaNueva, true)){
+                FileReader fr = new FileReader(getArchivoProgramas());
                 BufferedReader br = new BufferedReader(fr);
                 String lector = br.readLine();
 
@@ -252,18 +250,18 @@ public class SistemaOperativo {
                     } else {
                         if (lector == null){ //en caso de que el programa a desisnstalar es el ultimo
                             break;
-                        } else {
+                        } else{
                             fw.write(lector+"\n");
                             lector = br.readLine();
                         }
                     }
                 }
-                setRutaProgramas(ruta); //se cambia la ruta en la que se instalaran los programas
+                setArchivoProgramas(rutaNueva); //se cambia la ruta en la que se instalaran los programas
                 //se limpia el archivo antiguo
-                if (ruta.equals(rutaA)){
-                    FileWriter fw1 = new FileWriter(rutaB);
+                if (rutaNueva.equals(archivosProgramasA)){
+                    FileWriter fw1 = new FileWriter(archivosProgramasB);
                 } else {
-                    FileWriter fw1 = new FileWriter(rutaA);
+                    FileWriter fw1 = new FileWriter(archivosProgramasA);
                 }
             } catch (IOException e){
                 System.out.println("Error eliminando el software de los registros");
@@ -367,8 +365,14 @@ public class SistemaOperativo {
 
     //recoge los programas que estan instalados despues de un encendido sin formateo
     private void recogerProgramasInstalados(){
-        try (FileReader fr = new FileReader(getRutaProgramas())){
-            BufferedReader bf = new BufferedReader(fr);
+        try {
+
+            BufferedReader bf = new BufferedReader(new FileReader(getArchivoProgramas()));
+            if (bf.ready()==false){ //si el archivo esta vacio se prueba con el siguiente
+                bf = new BufferedReader(new FileReader(archivosProgramasB));
+                setArchivoProgramas(archivosProgramasB);
+            }
+
             String leer = bf.readLine(); //lee linea por linea los atributos guardados en el archivo de texto
             ArrayList<String> datosPrograma = new ArrayList<String>(); //guardara temporalmente los datos del programa
 
@@ -379,8 +383,8 @@ public class SistemaOperativo {
                     //se crea el objeto software
                     Software sTemp = new Software(datosPrograma.get(0),Double.parseDouble(datosPrograma.get(1)),Double.parseDouble(datosPrograma.get(2)),
                             Double.parseDouble(datosPrograma.get(3)), Boolean.parseBoolean(datosPrograma.get(4)));
-                    //se agnade el programa a instalados
-                    getProgramas().add(sTemp);
+
+                    getProgramas().add(sTemp); //se agnade el programa a instalados
                     datosPrograma.clear(); //se limpian los datos del programa
                     leer = bf.readLine(); //se lee la siguiente linea
                 } else { //si aun hay atributos por leer
@@ -405,15 +409,15 @@ public class SistemaOperativo {
 
             try{
                 //borrado programas A
-                FileWriter fw1 = new FileWriter(rutaA);
+                FileWriter fw1 = new FileWriter(archivosProgramasA);
                 fw1.close();
 
                 //borrado programas B
-                FileWriter fw2 = new FileWriter(rutaB);
+                FileWriter fw2 = new FileWriter(archivosProgramasB);
                 fw2.close();
 
                 //borrado SO
-                FileWriter fw3 = new FileWriter(ruta);
+                FileWriter fw3 = new FileWriter(archivoSO);
                 fw3.close();
 
                 setApagar(true); //se apaga el ordenador
@@ -533,11 +537,11 @@ public class SistemaOperativo {
         return softwares;
     }
 
-    public String getRutaProgramas() {
-        return rutaProgramas;
+    public File getArchivoProgramas() {
+        return archivoProgramas;
     }
 
-    public void setRutaProgramas(String rutaProgramas) {
-        this.rutaProgramas = rutaProgramas;
+    public void setArchivoProgramas(File archivoProgramas) {
+        this.archivoProgramas = archivoProgramas;
     }
 }
