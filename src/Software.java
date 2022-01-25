@@ -3,7 +3,7 @@
  * @version 1.1
  * @since 13/01/21
  * @description Software por ahora no tiene mucha más funcionalidad a parte de consumir recursos del ordenador
- * PRÓXIMAMENTE: añadir alguna funcionalidad a la hora de ejecutar un programa*/
+ **/
 
 public class Software {
     //atributos
@@ -14,7 +14,7 @@ public class Software {
     private boolean enEjecucion; //true==ejecutandose, false==no se esta ejecutando
     private boolean instalado; //true==ya esta instalado en el SO, false==no esta instalado
 
-    //constructor basico
+    //constructor para programas base
     public Software(String nombre, double version, double espacioRequerido, double memRequerida) {
         this.nombre = nombre;
         this.version = version;
