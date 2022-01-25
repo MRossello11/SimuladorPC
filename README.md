@@ -1,4 +1,4 @@
-# SimuladorPC v1.4
+# SimuladorPC v1.6
 Simulador básico de un sistema informático (Ordenador con memoria RAM y almacenamiento, Sistema Operativo y programas)
 
 El simulador es capaz de instalar Sistemas Operativos y programas y mantenerlos incluso después de cerrar la ejecución del programa.
